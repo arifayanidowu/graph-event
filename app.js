@@ -12,13 +12,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+let events = [];
+
 app.use(
   "/graphql",
   grqphqlHTTP({
     graphiql: true,
     schema: buildSchema(`
-        input eventInput {
-            id: ID!
+        input EventInput {
             title: String!
             description: String!
             price: Float!
@@ -26,7 +27,7 @@ app.use(
         }
 
         type Event{
-            id: ID!
+            id: ID
             title: String!
             description: String!
             price: Float!
@@ -34,11 +35,11 @@ app.use(
         }
 
         type RootQuery {
-            events: [Event]!
+            events: [Event!]!
         }
 
         type RootMutation {
-            createEvent(name: String): String
+            createEvent(event: EventInput): Event
         }
         
         schema {
@@ -48,11 +49,18 @@ app.use(
     `),
     rootValue: {
       events: () => {
-        return ["Romantic cooking", "Sailing", "All-Night coding"];
+        return events;
       },
-      createEvent: args => {
-        const eventName = args.name;
-        return eventName;
+      createEvent: ({ event: { title, description, price, date } }) => {
+        const newObj = {
+          id: Math.random().toString(),
+          title,
+          description,
+          price: +price,
+          date
+        };
+        events = [...events, newObj];
+        return newObj;
       }
     }
   })
